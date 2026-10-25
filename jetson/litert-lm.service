@@ -1,0 +1,17 @@
+[Unit]
+Description=LiteRT-LM server (Gemma 4 E4B)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+User=mike
+ExecStart=/home/mike/.local/bin/litert-lm serve --host 0.0.0.0 --port 9379
+# Loads the model at start, so the first real query doesn't wait the ~25 s cold load.
+ExecStartPost=/usr/bin/curl -s -o /dev/null --retry 30 --retry-connrefused --retry-delay 1 http://127.0.0.1:9379/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"gemma-4-e4b","messages":[{"role":"user","content":"hi"}]}'
+Restart=always
+RestartSec=5
+OOMScoreAdjust=500
+
+[Install]
+WantedBy=multi-user.target

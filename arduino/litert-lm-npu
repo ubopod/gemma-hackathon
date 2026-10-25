@@ -1,0 +1,15 @@
+#!/home/arduino/.local/share/uv/tools/litert-lm/bin/python
+# litert-lm with a working "npu" backend on Linux; use it like litert-lm, e.g. litert-lm-npu serve.
+# Stock litert-lm only finds an NPU through OpenVINO on Windows. On Linux the backend needs the folder
+# holding LiteRT's Qualcomm dispatch library, which is the folder ADSP_LIBRARY_PATH points to.
+# Patches a litert-lm internal, so keep litert-lm pinned at 0.18.1. The benchmark command ignores the
+# folder; serve is what this is tested with.
+import os, sys
+import litert_lm
+from litert_lm_cli import main, model
+
+create_backend = model._create_backend_obj
+model._create_backend_obj = lambda name, *args, **kwargs: (
+    litert_lm.Backend.NPU(litert_dispatch_lib_dir=os.environ["ADSP_LIBRARY_PATH"]) if name == "npu"
+    else create_backend(name, *args, **kwargs))
+sys.exit(main.main())
